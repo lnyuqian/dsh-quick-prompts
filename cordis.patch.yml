@@ -1,0 +1,4 @@
+# dsh-quick-prompts 服务端插件：注册 /api/quick-prompts 读写项目根目录的提示词文件
+- insert:
+    - id: dsh-quick-prompts
+      name: dsh-quick-prompts
