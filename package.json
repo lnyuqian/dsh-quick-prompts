@@ -1,7 +1,7 @@
 {
   "name": "dsh-quick-prompts",
-  "description": "输入框快捷输入（闪电笔）：权限切换旁一个按钮，点选预设提示词直接发送；提示词可录入编辑，持久化到项目根目录 .dsh/quick-prompts.json",
-  "version": "0.1.0",
+  "description": "输入框快捷输入：输入框上方常驻横向快捷条（第一行分类、第二行标题，悬停切换、点击插入）；闪电笔弹层可管理并从 MD 导入；数据存 ~/.dsh/quick-prompts.json 全局一份不丢失",
+  "version": "0.2.0",
   "license": "MIT",
   "type": "module",
   "main": "lib/index.js",
