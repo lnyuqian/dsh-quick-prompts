@@ -78,5 +78,18 @@ assert(merged[0].prompts[1].title === '新标题', '用例4：新标题追加成
 assert(parse('').length === 0, '用例5：空文件解析为空')
 assert(parse('### 空分类').length === 0, '用例5：空分类被丢弃')
 
+// 用例 6：标题尾部 ` ⏎` 标记 = 自动发送
+const c6 = parse('### 快捷\n- 一键问好 ⏎\n    - 你好，请汇报当前进度。\n- 普通条目\n    - 仅插入内容。')
+assert(c6[0].prompts.length === 2, '用例6：⏎ 标记条目正常解析')
+assert(c6[0].prompts[0].title === '一键问好' && c6[0].prompts[0].autoSend === true, '用例6：⏎ 标记剥离并置 autoSend=true')
+assert(c6[0].prompts[1].title === '普通条目' && !c6[0].prompts[1].autoSend, '用例6：无标记条目 autoSend 缺省假')
+
+// 用例 7：合并保留 autoSend
+const existing7 = [{ id: 'c7', name: '快捷', prompts: [{ id: 'p7', title: '旧条目', text: '旧', autoSend: true }] }]
+const imported7 = parse('### 快捷\n- 新条目 ⏎\n    - 新内容')
+const merged7 = merge(existing7, imported7)
+assert(merged7[0].prompts[0].autoSend === true, '用例7：合并保留已有条目 autoSend')
+assert(merged7[0].prompts[1].autoSend === true && merged7[0].prompts[1].title === '新条目', '用例7：导入条目 autoSend 保留')
+
 console.log('\n结果: ' + pass + ' passed, ' + fail + ' failed')
 process.exit(fail > 0 ? 1 : 0)

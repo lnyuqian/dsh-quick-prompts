@@ -1,6 +1,6 @@
 # dsh-quick-prompts
 
-**English**: A DeepSeek Harness (DSH) Web client plugin that adds quick prompt input to the chat box — a persistent two-row shortcut bar (row 1: categories, row 2: titles) above the input field, plus a "lightning pen" popup button for managing prompts and importing them from Markdown documents. Clicking a title inserts the prompt into the input box (never auto-sends). Prompts are stored globally in `~/.dsh/quick-prompts.json`, so they survive environment restarts and project switches.（中文说明见下）
+**English**: A DeepSeek Harness (DSH) Web client plugin that adds quick prompt input to the chat box — a persistent two-row shortcut bar (row 1: categories, row 2: titles) above the input field, plus a "lightning pen" popup button for managing prompts and importing them from Markdown documents. Each prompt can optionally enable **auto-send**: auto-send prompts show a small ⏎ (Enter) icon after their title, and clicking one inserts the text and submits it immediately via the official submit channel. Prompts are stored globally in `~/.dsh/quick-prompts.json`, so they survive environment restarts and project switches.（中文说明见下）
 
 DeepSeek Harness (DSH) Web 客户端插件：**输入框快捷输入（分类快捷条 + 闪电笔）**。
 
@@ -9,6 +9,7 @@ DeepSeek Harness (DSH) Web 客户端插件：**输入框快捷输入（分类快
 ## 功能特性
 
 - **常驻快捷条**：第一行分类、第二行标题；悬停分类切换下方标题，点击标题插入输入框（可再编辑后手动发送）。
+- **自动发送（按条开关）**：管理弹层中每条快捷语可单独开启「⏎ 自动发送」；开启的条目在快捷条与弹层中**标题后带 ⏎ 小图标**，点击后插入内容并**立即发送**（走官方 submit 通道）；未开启的条目保持仅插入。旧数据无该字段时一律按不发送处理。
 - **分类管理**：弹层「管理」中每条快捷语带「分类」字段，可新增 / 修改 / 删除，点「保存」落盘。
 - **MD 导入**：弹层「导入MD」选择 Markdown 文件，按 `###` 解析分类、无序列表解析标题、缩进列表解析内容；同名标题跳过、其余合并追加。
 - **永不丢失**：数据存全局 `~/.dsh/quick-prompts.json`（`DSH_HOME` 目录下），与会话、项目无关；旧版按项目存放的数据可在新版里重新导入。
@@ -20,8 +21,8 @@ DeepSeek Harness (DSH) Web 客户端插件：**输入框快捷输入（分类快
 ### 分类名
 - 快捷语标题
     - 快捷语内容（可多行，多条缩进行自动拼接）
-- 另一条标题
-    - 内容
+- 自动发送的标题 ⏎
+    - 内容（该条开启自动发送：导出时标题尾部带 ⏎ 标记，导入时识别还原）
 ```
 
 
