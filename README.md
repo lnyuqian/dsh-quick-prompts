@@ -1,6 +1,6 @@
 # dsh-quick-prompts
 
-**English**: A DeepSeek Harness (DSH) Web client plugin that adds quick prompt input to the chat box — a persistent two-row shortcut bar (row 1: categories, row 2: titles) above the input field, plus a "lightning pen" popup button for managing prompts and importing them from Markdown documents. Each prompt can optionally enable **auto-send**: auto-send prompts show a small ⏎ (Enter) icon after their title, and clicking one inserts the text and submits it immediately via the official submit channel. Prompts are stored globally in `~/.dsh/quick-prompts.json`, so they survive environment restarts and project switches.（中文说明见下）
+**English**: A DeepSeek Harness (DSH) Web client plugin that adds quick prompt input to the chat box — a persistent two-row shortcut bar (row 1: categories, row 2: titles) above the input field, plus a "lightning pen" popup button for managing prompts and importing them from Markdown documents. Each prompt can optionally enable **auto-send** (⏎ icon; inserts and submits immediately via the official submit channel) and carry a numeric **order index** (prompts render left-to-right sorted by index ascending). Prompts are stored globally in `~/.dsh/quick-prompts.json`, so they survive environment restarts and project switches.（中文说明见下）
 
 DeepSeek Harness (DSH) Web 客户端插件：**输入框快捷输入（分类快捷条 + 闪电笔）**。
 
@@ -10,6 +10,7 @@ DeepSeek Harness (DSH) Web 客户端插件：**输入框快捷输入（分类快
 
 - **常驻快捷条**：第一行分类、第二行标题；悬停分类切换下方标题，点击标题插入输入框（可再编辑后手动发送）。
 - **自动发送（按条开关）**：弹层中每条快捷语右侧有「⏎ 开/关」按钮，**点击立即生效并落盘**（无需进入编辑模式）；管理弹层中也可按条设置。开启的条目在快捷条与弹层中**标题后带 ⏎ 小图标**，点击后插入内容并**立即发送**（走官方 submit 通道）；未开启的条目保持仅插入。旧数据无该字段时一律按不发送处理。
+- **序号排序**：每条快捷语可设置数字**序号**（管理弹层中每行的「序」输入框），快捷条与弹层按**序号从小到大、自左向右**排列（稳定排序，无序号的条目排在最后）。进入编辑时自动按当前展示顺序预填 1..N；「新增」行自动沿用上一行分类并给出**该分类现有最大序号 +1** 的建议值；导出 MD 也按序号升序输出。
 - **分类管理**：弹层「管理」中每条快捷语带「分类」字段，可新增 / 修改 / 删除，点「保存」落盘。
 - **MD 导入**：弹层「导入MD」选择 Markdown 文件，按 `###` 解析分类、无序列表解析标题、缩进列表解析内容；同名标题跳过、其余合并追加。
 - **永不丢失**：数据存全局 `~/.dsh/quick-prompts.json`（`DSH_HOME` 目录下），与会话、项目无关；旧版按项目存放的数据可在新版里重新导入。

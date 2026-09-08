@@ -17,11 +17,10 @@ function extract(name) {
 }
 
 const genId = (p) => p + Math.random().toString(36).slice(2, 8)
-const code = extract('parseQuickPromptsMd') + '\n' + extract('mergeCategories')
-const parseQuickPromptsMd = new Function('genId', 'return function(){' + code + '; return { parseQuickPromptsMd: parseQuickPromptsMd, mergeCategories: mergeCategories } }')() === undefined
+const code = extract('parseQuickPromptsMd') + '\n' + extract('mergeCategories') + '\n' + extract('getOrder') + '\n' + extract('sortPrompts')
 // 上面这行不靠谱，直接 eval 更简单
-const fn = new Function('genId', code + '; return { parseQuickPromptsMd, mergeCategories }')(genId)
-const { parseQuickPromptsMd: parse, mergeCategories: merge } = fn
+const fn = new Function('genId', code + '; return { parseQuickPromptsMd, mergeCategories, sortPrompts }')(genId)
+const { parseQuickPromptsMd: parse, mergeCategories: merge, sortPrompts } = fn
 
 let pass = 0, fail = 0
 function assert(cond, msg) {
@@ -90,6 +89,25 @@ const imported7 = parse('### 快捷\n- 新条目 ⏎\n    - 新内容')
 const merged7 = merge(existing7, imported7)
 assert(merged7[0].prompts[0].autoSend === true, '用例7：合并保留已有条目 autoSend')
 assert(merged7[0].prompts[1].autoSend === true && merged7[0].prompts[1].title === '新条目', '用例7：导入条目 autoSend 保留')
+
+// 用例 8：序号排序 —— 从小到大、无序号排最后、同序号保持稳定
+const p8 = [
+  { title: '丙', order: 3 },
+  { title: '甲', order: 1 },
+  { title: '无序号甲' },
+  { title: '乙', order: 2 },
+  { title: '无序号乙' },
+  { title: '丙同号', order: 3 },
+]
+const s8 = sortPrompts(p8)
+assert(s8.map(p => p.title).join(',') === '甲,乙,丙,丙同号,无序号甲,无序号乙', '用例8：序号升序、无序号排最后、同序号稳定')
+assert(sortPrompts([]).length === 0 && sortPrompts(null).length === 0, '用例8：空/非法输入安全')
+
+// 用例 9：合并保留 order
+const existing9 = [{ id: 'c9', name: '快捷', prompts: [{ id: 'p9', title: '旧条目', text: '旧', order: 2 }] }]
+const merged9 = merge(existing9, parse('### 快捷\n- 新条目\n    - 新内容'))
+assert(merged9[0].prompts[0].order === 2, '用例9：合并保留已有条目 order')
+assert(merged9[0].prompts[1].order === undefined, '用例9：导入新条目无 order')
 
 console.log('\n结果: ' + pass + ' passed, ' + fail + ' failed')
 process.exit(fail > 0 ? 1 : 0)
