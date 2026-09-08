@@ -1,7 +1,7 @@
 {
   "name": "dsh-quick-prompts",
   "description": "输入框快捷输入（闪电笔）：点选预设提示词插入输入框，可按条开启自动发送（⏎）、可设序号排序，提示词可编辑并持久化到 ~/.dsh 全局",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "entry": {
     "name": "dsh-quick-prompts",
     "inject": []
