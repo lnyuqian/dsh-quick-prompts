@@ -109,13 +109,23 @@ Web 版：重新执行上面的 `dsh plugin --profile web add ...`，然后重�
 | `lib/index.js`（服务端） | 注册 `GET/POST /api/quick-prompts`，读写全局 `~/.dsh/quick-prompts.json`（v2 分类结构，自动兼容旧 v1 平铺并迁移为「默认」分类）。Web 版由 webserver 直接处理；桌面版由 Electron 主进程把 `dsh-app://app/api/...` 带认证 cookie 转发到同一张路由表 |
 | `lib/client.js`（浏览器） | 纯 JS（`React.createElement`，无构建），通过 `window.__ModuleLoader__.load` 注册，注入 `conversation.input.dock`（常驻横向条）与 `conversation.input.left`（闪电笔弹层），持久化走 `/api/quick-prompts`。点击条目时经 `useInput` 快照（或 dock owner 的 `InputState`，再退化为 DOM）读取当前草稿，**追加**后交 `inputActions.setDraft` 写回 |
 
+### 两个必须遵守的宿主约定（v0.3.1 修复）
+
+这两条都是桌面版实测踩出来的坑，写成约定以免回归：
+
+| 约定 | 不遵守的后果 | 正确做法 |
+|---|---|---|
+| `webServer.register()` 返回的 disposer **必须挂进 `ctx.effect`** | 每次 HMR 重组 / 插件启停都会重复注册同一路径，第二次直接 `webserver: duplicate exact route` → 整条插件行激活失败（桌面版安装会连续组合多次，必现） | `ctx.effect(() => webServer.register({ ... }))`；并对同进程重复注册做**窄容错**：只吞 `duplicate` 并告警，其余错误照抛 |
+| 注入的 `<style>` 必须带 `data-plugin="<包名>"` 归属标记，且要在 **factory 物化期**注入 | 客户端模块系统按 `data-plugin` 认领/回收 bundle 样式；标记或时机不对时，宿主图更新会把 `<style>` 收走，而插件实例还挂着 → 界面退化成浏览器默认样式、布局整体塌陷（「UI 易位、改变形态」） | 物化期 `ensureStyles()` 注入并显式打 `data-plugin`；`apply` 里再用 MutationObserver 观察 `document.head`，被回收时自动重注入 |
+
 ## 测试
 
 ```powershell
-node test-append.mjs     # 点击=追加而非覆盖（含 useInput / DOM 兜底 / 自动发送）
+node test-append.mjs     # 点击=追加而非覆盖（含 useInput / DOM 兜底 / 自动发送）+ 样式注入归属
 node test-parser.mjs     # MD 解析与合并（分类、⏎ 标记、序号稳定排序）
 node test-roundtrip.mjs  # 导出 ↔ 导入 往返一致
 node test-desktop.mjs    # 桌面适配：弹层定位、dsh-app 环境识别、复制MD 兜底
+node test-server.mjs     # 服务端半部：路由生命周期/重复注册容错 + 隔离 DSH_HOME 下的读写往返
 ```
 
 ## 目录结构

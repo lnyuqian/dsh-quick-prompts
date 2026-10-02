@@ -21,10 +21,23 @@ globalThis.window = {
 
 /** client.js 注入样式时会用到 document；兜底读草稿时会用 querySelectorAll。 */
 let domText = null
+const injectedStyles = []
+/** 极简选择器匹配：只支持 ensureStyles 用到的 style[data-plugin="..."]。 */
+function matchInjected(sel) {
+  const m = /^style\[data-plugin="(.+)"\]$/.exec(String(sel))
+  if (!m) return []
+  return injectedStyles.filter((el) => el.attrs['data-plugin'] === m[1])
+}
 globalThis.document = {
-  createElement: () => ({ setAttribute() {}, remove() {}, textContent: '' }),
-  head: { appendChild() {} },
-  querySelectorAll: () => (domText === null ? [] : [{ innerText: domText, closest: () => null }]),
+  createElement: (tag) => {
+    const el = { tagName: tag, attrs: {}, textContent: '', setAttribute(k, v) { this.attrs[k] = v }, remove() {} }
+    return el
+  },
+  head: { appendChild(el) { injectedStyles.push(el) } },
+  querySelectorAll: (sel) => {
+    if (String(sel).startsWith('style[')) return matchInjected(sel)
+    return domText === null ? [] : [{ innerText: domText, closest: () => null }]
+  },
 }
 
 /** React stub：createElement 返回普通对象；useState 依次消费 stateQueue。 */
@@ -45,6 +58,13 @@ const mod = moduleFactory.factory((name) => {
 })
 assert.equal(typeof mod.apply, 'function', 'factory 应导出 apply')
 
+/* ---------------- 样式注入（回归：桌面版曾因归属标记不当被宿主回收） ---------------- */
+
+assert.equal(injectedStyles.length, 1, '物化期应注入恰好一个 <style>')
+assert.equal(injectedStyles[0].attrs['data-plugin'], 'dsh-quick-prompts', '样式需按模块系统约定打 data-plugin 归属标记')
+assert.ok(injectedStyles[0].textContent.includes('.qp-bar'), '样式内容应为插件 CSS')
+console.log('  \u2713 物化期注入样式且带 data-plugin 归属标记')
+
 /* ---------------- 捕获槽位注册 ---------------- */
 
 const components = {}
@@ -58,6 +78,7 @@ mod.apply({
 })
 assert.ok(components['conversation.input.dock'], '应注册 dock 快捷条')
 assert.ok(components['conversation.input.left'], '应注册闪电笔 seat')
+assert.equal(injectedStyles.length, 1, 'apply 期间的样式兜底应幂等，不重复注入')
 
 /* ---------------- 测试数据与渲染辅助 ---------------- */
 
