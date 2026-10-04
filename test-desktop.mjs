@@ -159,7 +159,8 @@ const CATS = [{
 }]
 
 function renderSeat() {
-  stateQueue = [CATS, true, { x: 10, y: 100, up: true, maxHeight: 400 }, null, null, false, [], false]
+  // 第一个 useState 是 useBarCollapsed（桌面宽屏默认展开 → false）
+  stateQueue = [false, CATS, true, { x: 10, y: 100, up: true, maxHeight: 400 }, null, null, false, [], false]
   const el = components['conversation.input.left']({ inputActions: { setDraft() {}, submit() {} }, input: { draft: '' } })
   return el.type(el.props)
 }

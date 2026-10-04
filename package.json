@@ -1,7 +1,7 @@
 {
   "name": "dsh-quick-prompts",
-  "description": "输入框快捷输入（web 版 / 桌面版通用）：输入框上方常驻横向快捷条（第一行分类、第二行标题，悬停切换、点击追加到原有内容之后且不清空）；每条可单独开启自动发送（⏎ 图标，点击即替换草稿并发送）、可设置数字序号按序排列；闪电笔弹层可管理并从 MD 导入；数据存 ~/.dsh/quick-prompts.json 全局一份不丢失",
-  "version": "0.3.1",
+  "description": "输入框快捷输入（web 版 / 桌面版通用）：输入框上方常驻横向快捷条（第一行分类、第二行标题，悬停切换、点击追加到原有内容之后且不清空）；闪电笔右侧三角可一键收起/展开快捷条（窄屏默认收起，每台设备各自记住）；每条可单独开启自动发送（⏎ 图标，点击即替换草稿并发送）、可设置数字序号按序排列；闪电笔弹层可管理并从 MD 导入；数据存 ~/.dsh/quick-prompts.json 全局一份不丢失",
+  "version": "0.4.0",
   "license": "MIT",
   "type": "module",
   "main": "lib/index.js",
@@ -30,7 +30,7 @@
   },
   "scripts": {
     "check": "node --check lib/index.js && node --check lib/client.js",
-    "test": "node test-append.mjs && node test-parser.mjs && node test-roundtrip.mjs && node test-desktop.mjs && node test-server.mjs"
+    "test": "node test-append.mjs && node test-parser.mjs && node test-roundtrip.mjs && node test-desktop.mjs && node test-server.mjs && node test-collapse.mjs"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",

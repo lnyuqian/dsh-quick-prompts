@@ -14,9 +14,15 @@ import assert from 'node:assert/strict'
 
 let moduleFactory = null
 
+/** 本设备存储替身：折叠状态只写这里，不写共享数据文件。 */
+const deviceStore = new Map()
 globalThis.window = {
   __ModuleLoader__: { load(m) { moduleFactory = m } },
   innerWidth: 1440,
+  localStorage: {
+    getItem: (k) => (deviceStore.has(k) ? deviceStore.get(k) : null),
+    setItem: (k, v) => { deviceStore.set(k, String(v)) },
+  },
 }
 
 /** client.js 注入样式时会用到 document；兜底读草稿时会用 querySelectorAll。 */
@@ -91,16 +97,16 @@ const CATS = [{
   ],
 }]
 
-/** 同步渲染 dock 快捷条，返回元素树。 */
-function renderBar(props) {
-  stateQueue = [CATS] // 第一个 useState 即 useQuickCategories 的分类数据
+/** 同步渲染 dock 快捷条，返回元素树；收起时组件返回 null。 */
+function renderBar(props, collapsed = false) {
+  stateQueue = [collapsed, CATS] // 先 useBarCollapsed，后 useQuickCategories
   const el = components['conversation.input.dock'](props) // { type: QuickPromptBar, props }
   return el.type(el.props)
 }
 
 /** 同步渲染闪电笔 seat，open=true 以展开弹层条目列表。 */
-function renderSeat(props) {
-  stateQueue = [CATS, true, { x: 0, y: 0 }, null, null, false, [], false]
+function renderSeat(props, collapsed = false) {
+  stateQueue = [collapsed, CATS, true, { x: 0, y: 0 }, null, null, false, [], false]
   const el = components['conversation.input.left'](props)
   return el.type(el.props)
 }
@@ -218,6 +224,51 @@ console.log('dsh-quick-prompts 追加行为回归\n')
   btns[0].props.onClick()
   assert.deepEqual(a.calls, ['起点【短语】', '起点【短语】'], '每次点击都基于渲染期草稿快照追加')
   ok('连续点击：每次都保留原有内容')
+}
+
+/* 8. 折叠：收起时快捷条整块不渲染（0 高度） */
+{
+  const tree = renderBar({ inputActions: spyActions(), input: { draft: '' } }, true)
+  assert.equal(tree, null, '收起时 dock 快捷条应返回 null，完全不占高度')
+  assert.equal(collect(tree, isTitleChip).length, 0, '收起时不应渲染任何短语按钮')
+  ok('收起：快捷条整块不渲染（手机端让出全部高度）')
+}
+
+/* 9. 折叠开关：三角紧贴闪电笔，朝向与 aria 状态跟随折叠态 */
+{
+  const isTri = (n) => n.type === 'button' && n.props.className === 'qp-tri'
+  const pen = (n) => n.type === 'button' && n.props.className === 'qp-btn'
+
+  const expanded = renderSeat({ inputActions: spyActions(), input: { draft: '' } }, false)
+  const triOpen = collect(expanded, isTri)
+  assert.equal(triOpen.length, 1, '闪电笔右侧应有且仅有一个折叠三角')
+  assert.equal(triOpen[0].props.title, '收起快捷语', '展开态三角的 title 应为「收起快捷语」')
+  assert.equal(triOpen[0].props['aria-expanded'], 'true', '展开态 aria-expanded 应为 true')
+  assert.equal(collect(expanded, pen).length, 1, '同一组里仍应保留闪电笔按钮')
+  ok('三角位置：与闪电笔同组、紧随其后（未新增独立控件）')
+
+  // 三角内部的 svg path 决定朝向（函数组件在 stub 里需手动求值一次）
+  const glyph = (tri) => { const node = tri.children[0]; return node.type(node.props).children[0].props.d }
+  assert.equal(glyph(triOpen[0]), 'M2.2 4.1h7.6L6 8.4z', '展开态三角应朝下（点它收起）')
+
+  const collapsed = renderSeat({ inputActions: spyActions(), input: { draft: '' } }, true)
+  const triShut = collect(collapsed, isTri)[0]
+  assert.equal(triShut.props.title, '展开快捷语', '收起态三角的 title 应为「展开快捷语」')
+  assert.equal(triShut.props['aria-expanded'], 'false', '收起态 aria-expanded 应为 false')
+  assert.equal(glyph(triShut), 'M2.2 7.9h7.6L6 3.6z', '收起态三角应朝上（点它展开）')
+  ok('三角朝向：展开态朝下（收起）、收起态朝上（展开）')
+}
+
+/* 10. 折叠开关：点击后落盘到本设备（localStorage），不写共享数据文件 */
+{
+  const isTri = (n) => n.type === 'button' && n.props.className === 'qp-tri'
+  const tri = collect(renderSeat({ inputActions: spyActions(), input: { draft: '' } }, false), isTri)[0]
+  tri.props.onClick()
+  assert.equal(window.localStorage.getItem('dsh-quick-prompts.collapsed'), '1', '收起后应在本设备记下收起状态')
+  const tri2 = collect(renderSeat({ inputActions: spyActions(), input: { draft: '' } }, true), isTri)[0]
+  tri2.props.onClick()
+  assert.equal(window.localStorage.getItem('dsh-quick-prompts.collapsed'), '0', '再点一次应记回展开状态')
+  ok('折叠状态按设备本地记忆（localStorage），不动三端共用的数据文件')
 }
 
 console.log('\n全部通过：' + passed + ' 项')
