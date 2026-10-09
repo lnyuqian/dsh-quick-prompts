@@ -1,6 +1,6 @@
 # dsh-quick-prompts
 
-**English**: A DeepSeek Harness (DSH) quick prompt input plugin that works in **both the Web profile and the Desktop app** — a persistent two-row shortcut bar (row 1: categories, row 2: titles) above the input field, plus a "lightning pen" popup button for managing prompts and importing them from Markdown documents. Clicking a prompt **appends** its content after whatever is already in the input box (nothing is cleared, nothing is sent). Each prompt can optionally enable **auto-send** (⏎ icon; replaces the draft with that prompt and submits immediately via the official submit channel) and carry a numeric **order index** (prompts render left-to-right sorted by index ascending). Prompts are stored globally in `~/.dsh/quick-prompts.json`, so they survive environment restarts and project switches — and the same file is shared by the Web profile and the Desktop app.（中文说明见下）
+**English**: A DeepSeek Harness (DSH) quick prompt input plugin that works in **both the Web profile and the Desktop app** — a persistent two-row shortcut bar (row 1: categories, row 2: titles) above the input field, plus a "lightning pen" popup button for managing prompts and importing them from Markdown documents. Clicking a prompt **appends** its content after whatever is already in the input box (nothing is cleared, nothing is sent). Each prompt can optionally enable **auto-send** (⏎ icon; replaces the draft with that prompt and submits immediately via the official submit channel) and carry a numeric **order index** (prompts render left-to-right sorted by index ascending). Prompts are stored globally in `~/.dsh/quick-prompts.json`, so they survive environment restarts and project switches — and the same file is shared by the Web profile and the Desktop app. Both rows always stay a **single line**: when the content overflows, **press and drag the row sideways** to reveal the rest (no wrapping, no extra height).（中文说明见下）
 
 DeepSeek Harness (DSH) 插件：**输入框快捷输入（分类快捷条 + 闪电笔）**，Web 版与桌面版通用。
 
@@ -18,6 +18,7 @@ DeepSeek Harness (DSH) 插件：**输入框快捷输入（分类快捷条 + 闪�
 - **图标随主题**：按钮图标见 `assets/快捷输入.svg`，以 `currentColor` 内联渲染，自动跟随明暗主题与悬停色。
 - **弹层自适应（桌面友好）**：弹层按可视区自动决定向上/向下展开、左右夹紧并按可用空间限高，小窗口下不会被推出可视区。
 - **一键收起 / 展开（v0.4.0，为手机与远程访问而做）**：闪电笔**右侧**多了一个三角开关——▾ 表示快捷条展开中（点它收起）、▴ 表示已收起（点它展开）。收起后快捷条**整块不渲染（0 高度）**，手机端完全让出高度；此时仍可用闪电笔打开弹层选词，能力不丢。**窄屏（≤640px）默认收起，电脑默认展开**；手动切过之后**按设备各自记住**（存 `localStorage`，不写三端共用的数据文件，手机收起不会连累电脑）。
+- **单行 + 按住拖动查看后面内容（v0.5.0）**：分类行与标题行**都保持单行**——一行放不下时**不再换行把快捷条撑高**，改为**按住行内容左右拖动**即可看到后面的部分（鼠标拖动；触摸屏走原生惯性滑动）。拖动时显示抓取光标、**滚动条隐藏**（不占高度、不破坏外观）。两条边界守得很死：拖动中**划过分类不会误切分类**，松开那一下**不会被当成点击**去追加提示词；而**普通点击完全照旧**。内容没超出一行时根本不接管指针，行为与以前一模一样。
 
 ### MD 导入格式
 
@@ -98,7 +99,7 @@ Web 版：重新执行上面的 `dsh plugin --profile web add ...`，然后重�
 | MD 导出 | 另提供「**复制MD**」按钮（仅在桌面端出现），下载通道异常时可把同一份 MD 文本写入剪贴板 |
 
 ## 使用
-1. 输入框上方常驻**横向快捷条**：第一行分类（悬停/点击切换）、第二行标题；点击标题 → 内容**追加到输入框原有内容之后**（不清空、不自动发送，可再编辑）。
+1. 输入框上方常驻**横向快捷条**：第一行分类（悬停/点击切换）、第二行标题；点击标题 → 内容**追加到输入框原有内容之后**（不清空、不自动发送，可再编辑）。两行都**只占一行**：放不下时**按住行内容左右拖动**即可看到后面的部分（鼠标拖动；触摸屏直接滑动）。
 2. 工具行闪电笔按钮（「权限切换」右侧）打开弹层：按分类分组浏览，点击同样**追加**到原有内容之后。
 3. **闪电笔右侧的三角**：一键收起 / 展开快捷条。收起后不占任何高度（手机、远程查看时很实用），闪电笔仍是选词入口；状态按设备记住，窄屏首次进入默认收起。
 4. 弹层「导入MD」：选择 Markdown 文件，按 `### 分类 / 列表标题 / 缩进内容` 解析导入（同名标题跳过）。
@@ -132,6 +133,7 @@ node test-desktop.mjs    # 桌面适配：弹层定位、dsh-app 环境识别、
 node test-server.mjs     # 服务端半部：路由生命周期/重复注册容错 + 隔离 DSH_HOME 下的读写往返
 node test-collapse.mjs   # 折叠默认值与每设备记忆（窄屏默认收起、记录优先、localStorage 不可用时回退）
 node test-category.mjs   # 分类下拉：选项来自全部分类（含草稿内新分类），切换无需先清空当前值
+node test-drag.mjs       # 单行 + 按住拖动（没超宽不接管、位移不足仍算点击、拖动中不误切分类、拖完不吃下次点击）
 ```
 
 ## 目录结构
