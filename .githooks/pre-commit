@@ -1,0 +1,9 @@
+#!/bin/sh
+# 提交闸门（可选启用）：git config core.hooksPath .githooks
+#
+# 为什么要有它：2026-10-17 出过一次 —— 删函数时漏删 internals 里的导出引用，
+# lib/client.js 一加载就抛 ReferenceError，插件的闪电笔按钮与折叠三角全都不渲染。
+# node --check 只能查语法，查不出这类「模块级引用错误」；test-load.mjs 会真的加载一遍。
+# 本仓库是 link 安装：工作区即线上产物，所以这道闸门同时护住「提交」与「线上」。
+set -e
+node test-load.mjs

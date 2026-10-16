@@ -154,6 +154,7 @@ Web 版：重新执行上面的 `dsh plugin --profile web add ...`，然后重�
 ## 测试
 
 ```powershell
+node test-load.mjs       # 载入自检：客户端 bundle 能加载 / 能物化 / 导出完整 / 零日志 / 按钮与三角真的渲染出来
 node test-append.mjs     # 点击=追加而非覆盖（含 useInput / DOM 兜底 / 自动发送）+ 样式注入归属 + 折叠渲染
 node test-parser.mjs     # MD 解析与合并（分类、⏎ 标记、序号稳定排序）
 node test-roundtrip.mjs  # 导出 ↔ 导入 往返一致
@@ -165,7 +166,17 @@ node test-drag.mjs       # 单行 + 按住拖动（没超宽不接管、位移�
 node test-panel-header.mjs # 弹层工具行（MD 管理下拉 / 分类下拉 / 新增 / 修改）+ 删除可撤销 + 保存前冲突 + 搜索 / 批量 / 撤销重做 / 分类操作（17 项）
 node test-hold-to-send.mjs # 长按 300ms 才发：短按只填入、长按才发送、普通条目不变、拖动不算点击（8 项）
 node test-row-reorder.mjs # 拖拽排序：分类内换位 + 序号重排 1..N、落点计算、边界与其他字段保留（5 项）
+node test-refresh.mjs    # 外部变化刷新 + 编辑锁：首拉/重拉/节流/编辑期间只暂存
 ```
+
+> `npm test` 把它们按顺序串起来跑（约 3 秒）。**其中 `test-load.mjs` 排在第一位**：
+> 它真的把 `lib/client.js` 加载并物化一遍 —— 2026-10-17 出过一次「删函数漏删 `internals` 导出引用 →
+> 模块一加载就抛 `ReferenceError` → 闪电笔按钮与折叠三角全都不显示」，`node --check` 查不出来，这一条能立刻拦住。
+>
+> **可选：提交闸门**（把这个仓库当 link 安装用时尤其值）：
+> ```powershell
+> git config core.hooksPath .githooks   # 之后 git commit 会先跑 test-load.mjs
+> ```
 
 ## 目录结构
 ```
