@@ -72,7 +72,7 @@ function findEl(tree, className, out = []) {
   return out
 }
 
-/** 收集所有分类按钮（className 以 qp-cat 开头且不是 qp-cat-head / qp-cat-count） */
+/** 收集所有分类按钮（className 里含 qp-cat 这个独立类名的 button） */
 function findCatButtons(tree, out = []) {
   if (!tree || typeof tree !== 'object') return out
   if (Array.isArray(tree)) { tree.forEach((t) => findCatButtons(t, out)); return out }

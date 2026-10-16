@@ -29,10 +29,37 @@ function extract(name) {
   return SRC.slice(start, i + 1)
 }
 
+/**
+ * 从源码里读常量（**不许在测试里另写一份** —— 否则源码改了常量、测试还在验旧值，等于没验）。
+ */
+function numConst(name) {
+  const m = SRC.match(new RegExp('var\\s+' + name + '\\s*=\\s*([0-9]+)'))
+  assert.ok(m, '源码里应有常量 ' + name)
+  return Number(m[1])
+}
+
+const C = {
+  POP_WIDTH: numConst('POP_WIDTH'),
+  POP_MAX_HEIGHT: numConst('POP_MAX_HEIGHT'),
+  POP_GAP: numConst('POP_GAP'),
+  POP_MARGIN: numConst('POP_MARGIN'),
+  POP_MIN_HEIGHT: numConst('POP_MIN_HEIGHT'),
+  POP_MIN_WIDTH: numConst('POP_MIN_WIDTH'),
+  ROW_H: numConst('ROW_H'),
+  MIN_VISIBLE_ROWS: numConst('MIN_VISIBLE_ROWS'),
+  HEADER_ROWS_ALLOWANCE: numConst('HEADER_ROWS_ALLOWANCE'),
+  POP_CHROME_EST: numConst('POP_CHROME_EST'),
+}
+
 const popMod = new Function(
-  'POP_WIDTH', 'POP_MAX_HEIGHT', 'POP_GAP', 'POP_MARGIN', 'POP_MIN_HEIGHT',
+  'POP_WIDTH', 'POP_MAX_HEIGHT', 'POP_GAP', 'POP_MARGIN', 'POP_MIN_HEIGHT', 'POP_MIN_WIDTH',
+  'ROW_H', 'MIN_VISIBLE_ROWS', 'HEADER_ROWS_ALLOWANCE', 'POP_CHROME_EST',
   extract('clamp') + '\n' + extract('computePopPos') + '\n; return { computePopPos, clamp }',
-)(340, 400, 8, 8, 160)
+)(C.POP_WIDTH, C.POP_MAX_HEIGHT, C.POP_GAP, C.POP_MARGIN, C.POP_MIN_HEIGHT, C.POP_MIN_WIDTH,
+  C.ROW_H, C.MIN_VISIBLE_ROWS, C.HEADER_ROWS_ALLOWANCE, C.POP_CHROME_EST)
+
+/** 「至少 10 行提示语」应占的高度（10 行 + 分类头余量 + 头部/工具行） */
+const WANTED_H = (C.MIN_VISIBLE_ROWS + C.HEADER_ROWS_ALLOWANCE) * C.ROW_H + C.POP_CHROME_EST
 
 const isDesktopShell = new Function('location', 'navigator', extract('isDesktopShell') + '\n; return isDesktopShell')(
   { protocol: 'dsh-app:' }, { userAgent: 'Mozilla/5.0 Electron/38.0.0' },
@@ -46,13 +73,36 @@ console.log('dsh-quick-prompts 桌面版适配回归\n')
 /* ---------------- 1. 弹层定位 ---------------- */
 
 {
-  // 工具行按钮位于窗口中下部：上方空间充裕 → 向上展开，不额外限高
+  // 量到了上方快捷条：弹层与它**同宽同左边界**，并在它上方展开（用户 2026-10-17 定稿）
+  const bar = { left: 120, top: 600, bottom: 664, width: 560 }
+  const p = popMod.computePopPos({ left: 200, top: 600, bottom: 626 }, { width: 1280, height: 800 }, bar)
+  assert.equal(p.w, 560, '宽度应取快捷条的宽度')
+  assert.equal(p.x, 120, '左边界应对齐快捷条')
+  assert.equal(p.up, true, '上方空间充裕时向上展开')
+  assert.equal(p.y, 592, '弹层底边贴在快捷条上方 8px 处')
+  assert.equal(p.minHeight, WANTED_H, '浏览态至少留出 10 行提示语 + 分类头余量 + 头部/工具行')
+  ok('量到快捷条：弹层与它同宽同起点，并保证至少 10 行高度')
+}
+
+{
+  // 上方空间不足 10 行：minHeight 跟着可用空间收，绝不撑出可视区
+  const bar = { left: 120, top: 200, bottom: 264, width: 560 }
+  const p = popMod.computePopPos({ left: 200, top: 200, bottom: 226 }, { width: 1280, height: 400 }, bar)
+  assert.equal(p.up, true, '这一例取上方空间（184）大于下方（128）')
+  assert.ok(p.minHeight < WANTED_H, '空间不够时不应硬撑 10 行')
+  assert.ok(p.minHeight <= p.maxHeight, 'minHeight 不能超过 maxHeight')
+  ok('空间不足：至少 10 行的下限自动收敛到可用空间内')
+}
+
+{
+  // 工具的按钮位于窗口中下部：上方空间充裕 → 向上展开，不额外限高
   const p = popMod.computePopPos({ left: 200, top: 600, bottom: 626 }, { width: 1280, height: 800 })
   assert.equal(p.up, true, '上方空间充裕时应向上展开')
   assert.equal(p.y, 592, '向上展开时弹层底边贴在按钮上方 8px 处')
   assert.equal(p.x, 200, '位置充足时左边界不被改动')
-  assert.equal(p.maxHeight, 400, '上方空间足够时不应压缩高度')
-  ok('按钮在窗口中下部：向上展开且不限高')
+  assert.equal(p.w, C.POP_WIDTH, '量不到快捷条时退回兜底宽度')
+  assert.equal(p.maxHeight, C.POP_MAX_HEIGHT, '上方空间足够时不应压缩高度')
+  ok('量不到快捷条：退回按钮锚定 + 兜底宽度')
 }
 
 {
@@ -60,7 +110,7 @@ console.log('dsh-quick-prompts 桌面版适配回归\n')
   const p = popMod.computePopPos({ left: 40, top: 24, bottom: 50 }, { width: 900, height: 700 })
   assert.equal(p.up, false, '上方面积不足时应向下展开')
   assert.equal(p.y, 58, '向下展开时弹层顶边贴在按钮下方 8px 处')
-  assert.ok(p.maxHeight >= 160 && p.maxHeight <= 400, '限高应落在 [160,400] 区间')
+  assert.ok(p.maxHeight >= 160 && p.maxHeight <= C.POP_MAX_HEIGHT, '限高应落在 [160,上限] 区间')
   ok('按钮贴近窗口顶部：自动翻转为向下展开')
 }
 
@@ -74,7 +124,7 @@ console.log('dsh-quick-prompts 桌面版适配回归\n')
 {
   // 上下都很挤：限高到可用空间，避免溢出成不可滚动的长条
   const p = popMod.computePopPos({ left: 10, top: 200, bottom: 226 }, { width: 1200, height: 300 })
-  assert.ok(p.maxHeight <= 400, '受限方向的高度不应超过弹层上限')
+  assert.ok(p.maxHeight <= C.POP_MAX_HEIGHT, '受限方向的高度不应超过弹层上限')
   assert.ok(p.maxHeight >= 160, '限高不应低于最小可用高度')
   ok('上下空间紧张：按可用空间限高')
 }
