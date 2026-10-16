@@ -5,8 +5,8 @@
  *  1. 弹层定位 computePopPos：上方空间足够时向上展开、按钮贴顶时向下展开、
  *     靠右时左边界夹紧、按可用空间限高 —— 桌面窗口通常比浏览器窗口小，这是主要适配点。
  *  2. 运行环境识别 isDesktopShell：`dsh-app://` 协议或 Electron UA 判定为桌面端。
- *  3. 端到端：桌面环境下闪电笔弹层额外渲染「复制MD」兜底按钮，且复制内容与
- *     「导出MD」的序列化结果完全一致；普通浏览器环境下不出现该按钮。
+ *  3. 端到端：桌面环境下「MD 管理」下拉里多出「复制MD」兜底项，且复制内容与
+ *     「导出MD」的序列化结果完全一致；普通浏览器环境下不出现该项。
  *
  * 运行：node test-desktop.mjs
  */
@@ -176,17 +176,24 @@ function collect(node, pred, out = []) {
 }
 
 const findButton = (tree, label) => collect(tree, (n) => n.type === 'button' && n.children[0] === label)[0]
+/** v0.6.0：导入/导出/复制 三个 MD 动作收进顶部下拉，用 option 值点名动作。 */
+const mdSelect = (tree) => collect(tree, (n) => n.type === 'select' && String(n.props.className || '').includes('qp-md-select'))[0]
+const optionValues = (sel) => (sel.children || []).flat(3).filter(Boolean).map((o) => o.props.value)
 
 {
-  // 浏览器环境（无 location/navigator 覆盖）：不出现桌面专属的「复制MD」
+  // 浏览器环境（无 location/navigator 覆盖）：下拉里没有桌面专属的「复制MD」
   const tree = renderSeat()
-  assert.equal(findButton(tree, '复制MD'), undefined, '浏览器环境不应渲染「复制MD」')
-  assert.ok(findButton(tree, '导出MD'), '浏览器环境应渲染「导出MD」')
-  ok('浏览器环境：只提供「导出MD」')
+  const sel = mdSelect(tree)
+  assert.ok(sel, '顶部应渲染「MD 管理」下拉')
+  assert.deepEqual(optionValues(sel), ['', 'import', 'export'], '浏览器环境下拉应只有 导入MD / 导出MD')
+  assert.equal(findButton(tree, '导出MD'), undefined, '不应再各占一个按钮')
+  assert.equal(findButton(tree, '管理'), undefined, '旧「管理」入口应已移除')
+  sel.props.onChange({ target: { value: 'import' } }) // 选「导入MD」：触发隐藏的文件选择框
+  ok('浏览器环境：MD 管理下拉 = 导入MD / 导出MD（不含复制MD）')
 }
 
 {
-  // 桌面环境：出现「复制MD」，且复制内容与「导出MD」序列化结果一致
+  // 桌面环境：下拉里多出「复制MD」，复制内容与「导出MD」序列化结果一致
   let copied = null
   Object.defineProperty(globalThis, 'location', { value: { protocol: 'dsh-app:' }, configurable: true })
   Object.defineProperty(globalThis, 'navigator', {
@@ -195,16 +202,18 @@ const findButton = (tree, label) => collect(tree, (n) => n.type === 'button' && 
   })
   try {
     const tree = renderSeat()
-    const btn = findButton(tree, '复制MD')
-    assert.ok(btn, '桌面环境应渲染「复制MD」兜底按钮')
-    btn.props.onClick()
+    const sel = mdSelect(tree)
+    assert.ok(sel, '桌面环境应渲染「MD 管理」下拉')
+    assert.deepEqual(optionValues(sel), ['', 'import', 'export', 'copy'], '桌面下拉应多出「复制MD」')
+    sel.props.onChange({ target: { value: 'copy' } })
     await new Promise((r) => setTimeout(r, 0))
     assert.ok(typeof copied === 'string' && copied.length > 0, '复制内容应为非空文本')
     const lines = copied.split('\n')
     assert.ok(lines.includes('### 测试分类'), '复制内容应含分类标题')
     assert.ok(lines.some((l) => l.endsWith('自动 ⏎')), '自动发送条目应带 ⏎ 标记')
     assert.ok(copied.includes('    - 【短语】'), '内容行应缩进为 MD 列表')
-    ok('桌面环境：出现「复制MD」，内容与「导出MD」的 MD 格式一致')
+    assert.equal(sel.props.value, '', '下拉值恒为空：选完停在「MD 管理」')
+    ok('桌面环境：下拉里可选「复制MD」，内容与「导出MD」的 MD 格式一致')
   } finally {
     delete globalThis.location
     delete globalThis.navigator

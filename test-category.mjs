@@ -74,10 +74,12 @@ async function load() {
 /**
  * 渲染闪电笔座位（弹层）。
  * stateQueue 顺序 = QuickPromptSeat 的 useState 顺序：
- * [useBarCollapsed(SKIP), useQuickCategories(CATS), open, pos, error, info, editing, draft, saving]
+ * [useBarCollapsed(SKIP), useQuickCategories(CATS), open, pos, error, info, editing, draft, saving,
+ *  pendingExtern, targetCat(v0.6.0 顶部「分类」下拉)]
+ * 编辑态只渲染 targetCat 这个分类的行，所以每个用例都要把它设成被测行的分类。
  */
-function renderSeat(components, { editing, draft }) {
-  stateQueue = [SKIP, CATS, true, { x: 0, y: 0 }, null, null, editing, draft, false]
+function renderSeat(components, { editing, draft, targetCat = '常用' }) {
+  stateQueue = [SKIP, CATS, true, { x: 0, y: 0 }, null, null, editing, draft, false, false, targetCat]
   const el = components['conversation.input.left']({ inputActions: { setDraft() { }, submit() { } }, input: { draft: '' } })
   return el.type(el.props)
 }
@@ -120,7 +122,7 @@ const isCatInput = (n) => n.type === 'input' && String((n.props && n.props.class
 {
   const { components } = await load()
   const draft = [{ id: '', cat: '临时', title: 'x', text: 'x', autoSend: false, order: 1 }]
-  const tree = renderSeat(components, { editing: true, draft })
+  const tree = renderSeat(components, { editing: true, draft, targetCat: '临时' })
   const sel = find(tree, isCatSelect)
   const values = flat(sel.children).map((o) => o.props.value)
   assert.deepEqual(values, ['默认', '常用', '工作', '临时', '__qp_new_cat__'], '草稿内新分类也应出现在下拉里')

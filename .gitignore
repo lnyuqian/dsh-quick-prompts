@@ -2,3 +2,10 @@ node_modules/
 *.log
 *.tgz
 .DS_Store
+
+# 本地专用（不入公开仓库；文件仍留在工作区）
+# - lib/client.js.bak-*            : 改代码前的手工备份
+# - harness-refresh.cjs            : 本机 Playwright 端到端探针（仓库边界见 AGENTS.md，只允许 test-*.mjs）
+*.bak-*
+lib/*.bak-*
+harness-refresh.cjs

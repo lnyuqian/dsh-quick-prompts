@@ -1,6 +1,6 @@
 # dsh-quick-prompts
 
-**English**: A DeepSeek Harness (DSH) quick prompt input plugin that works in **both the Web profile and the Desktop app** — a persistent two-row shortcut bar (row 1: categories, row 2: titles) above the input field, plus a "lightning pen" popup button for managing prompts and importing them from Markdown documents. Clicking a prompt **appends** its content after whatever is already in the input box (nothing is cleared, nothing is sent). Each prompt can optionally enable **auto-send** (⏎ icon; replaces the draft with that prompt and submits immediately via the official submit channel) and carry a numeric **order index** (prompts render left-to-right sorted by index ascending). Prompts are stored globally in `~/.dsh/quick-prompts.json`, so they survive environment restarts and project switches — and the same file is shared by the Web profile and the Desktop app. Both rows always stay a **single line**: when the content overflows, **press and drag the row sideways** to reveal the rest (no wrapping, no extra height).（中文说明见下）
+**English**: A DeepSeek Harness (DSH) quick prompt input plugin that works in **both the Web profile and the Desktop app** — a persistent two-row shortcut bar (row 1: categories, row 2: titles) above the input field, plus a "lightning pen" popup whose top row holds an **"MD 管理" dropdown** (import / export / copy) and a **category dropdown + ‹ › / ⋯ / 新增 / 修改 / 撤销重做** (pick a category, add into it, edit only that category, rename or delete a whole category, bulk select/move/delete, undo-redo, cross-category search, and a server-side conflict check before saving); clicking a prompt **appends** its content after whatever is already in the input box (nothing is cleared, nothing is sent). Each prompt can optionally enable **auto-send** (⏎ icon; replaces the draft with that prompt and submits immediately via the official submit channel) and carry a numeric **order index** (prompts render left-to-right sorted by index ascending). Prompts are stored globally in `~/.dsh/quick-prompts.json`, so they survive environment restarts and project switches — and the same file is shared by the Web profile and the Desktop app. Both rows always stay a **single line**: when the content overflows, **press and drag the row sideways** to reveal the rest (no wrapping, no extra height).（中文说明见下）
 
 DeepSeek Harness (DSH) 插件：**输入框快捷输入（分类快捷条 + 闪电笔）**，Web 版与桌面版通用。
 
@@ -8,16 +8,29 @@ DeepSeek Harness (DSH) 插件：**输入框快捷输入（分类快捷条 + 闪�
 > [lnyuqian/dsh-quick-prompts-data](https://github.com/lnyuqian/dsh-quick-prompts-data)；
 > 在本目录做提交前请先读 [AGENTS.md](AGENTS.md)。
 
-输入框上方**常驻横向快捷条**：第一行显示分类、第二行显示当前分类下的标题；鼠标悬停分类即切换下方标题；点击标题把内容**追加到输入框原有内容之后**（不清空已输入的内容，也不自动发送）。工具行「权限切换」右侧另有闪电笔按钮，弹层内可管理快捷语并**从 MD 文档导入**。数据存全局 `~/.dsh/quick-prompts.json`，重启环境、换项目都不会丢，**Web 版与桌面版共用同一份数据**。
+输入框上方**常驻横向快捷条**：第一行显示分类、第二行显示当前分类下的标题；鼠标悬停分类即切换下方标题；点击标题把内容**追加到输入框原有内容之后**（不清空已输入的内容，也不自动发送）。工具行「权限切换」右侧另有闪电笔按钮，弹层顶部是「MD 管理」下拉（**导入 / 导出 / 复制**三个动作收在一个下拉里）与「分类」下拉 + **新增 / 修改**：选定分类后「新增」把新条目放进这个分类、「修改」只列出这个分类的条目，保存前还会先查一次冲突。数据存全局 `~/.dsh/quick-prompts.json`，重启环境、换项目都不会丢，**Web 版与桌面版共用同一份数据**。
 
 ## 功能特性
 
 - **常驻快捷条**：第一行分类、第二行标题；悬停分类切换下方标题，点击标题把内容**追加**到输入框原有内容之后——**不清空已输入的内容**（光标落在末尾，可再编辑后手动发送）。输入框为空时即等于写入该条短语。
-- **自动发送（按条开关）**：开关位于「管理」编辑模式中每行的「⏎ 自动发送：开/关」按钮（点「保存」落盘）。开启的条目在快捷条与弹层中**标题后带 ⏎ 小图标**，点击后**以该短语整体替换草稿并立即发送**（走官方 submit 通道）——替换而非追加，避免把还没写完的草稿一并误发出去；未开启的条目保持「追加且不发送」。旧数据无该字段时一律按不发送处理。
-- **序号排序**：每条快捷语可设置数字**序号**（管理弹层中每行的「序」**下拉框**，选项自动按该行所属分类的短语数量生成 1..N），快捷条与弹层按**序号从小到大、自左向右**排列（稳定排序，无序号的条目排在最后）。进入编辑时自动按当前展示顺序预填 1..N；「新增」行自动沿用上一行分类并给出**该分类现有最大序号 +1** 的建议值；导出 MD 也按序号升序输出。
-- **分类管理**：弹层「管理」中每条快捷语的「分类」是**下拉框**，可直接切换到任意已有分类；需要新分类时选「＋ 新建分类…」切成输入框，写完点「保存」落盘。（v0.4.1 修复：旧版是 `input + datalist`，浏览器会按当前值过滤候选项，必须先删掉当前分类才能看到别的分类。）
-- **MD 导入**：弹层「导入MD」选择 Markdown 文件，按 `###` 解析分类、无序列表解析标题、缩进列表解析内容；同名标题跳过、其余合并追加。
-- **MD 导出 / 复制**：弹层「导出MD」下载 `quick-prompts.md`；**桌面版另提供「复制MD」**，把同一份 MD 文本写入剪贴板——桌面外壳的下载通道受宿主策略影响，剪贴板是可靠退路。
+- **自动发送（按条开关）**：开关位于编辑态每行的「⏎ 自动发送：开/关」按钮（点「保存」落盘）。开启的条目在快捷条与弹层中**标题后带 ⏎ 小图标**，**按住约 300ms 松手才发送**（走官方 submit 通道，**以该短语整体替换草稿**——替换而非追加，避免把还没写完的草稿一并误发出去）；**短按只填入不发送**，键盘 Enter / 空格 = 明确发送。未开启的条目保持「追加且不发送」。旧数据无该字段时一律按不发送处理。
+- **序号排序**：每条快捷语可设置数字**序号**（编辑弹层中每行的「序」**下拉框**，选项自动按该行所属分类的短语数量生成 1..N），快捷条与弹层按**序号从小到大、自左向右**排列（稳定排序，无序号的条目排在最后）。进入编辑时自动按当前展示顺序预填 1..N；「新增」行落在**当前选中的分类**末尾并给出**该分类现有最大序号 +1** 的建议值；导出 MD 也按序号升序输出。
+- **分类管理**：编辑弹层中每条快捷语的「分类」是**下拉框**，可直接切换到任意已有分类；需要新分类时选「＋ 新建分类…」切成输入框，写完点「保存」落盘。（v0.4.1 修复：旧版是 `input + datalist`，浏览器会按当前值过滤候选项，必须先删掉当前分类才能看到别的分类。）
+- **MD 导入 / 导出 / 复制收进一个下拉（v0.6.0）**：弹层顶部原来是「导入MD / 导出MD / 复制MD」三个平铺按钮，现在合并成**一个「MD 管理」下拉**（选完自动回到「MD 管理」）。腾出来的位置改成 **「分类」下拉 + 新增 / 修改**：先选分类，再点「新增」就把新条目放进这个分类（序号接着排）；点「修改」只列出这个分类的条目来改，**其他分类保存时原样保留**。原来的「管理」入口已去掉 —— 它做的事分别由「新增」和「修改」承担。
+- **保存前先查冲突（v0.6.1）**：保存是整体替换，若期间另一台设备（或 API）改过数据，直接保存会**静默盖掉**那边的改动。现在点「保存」会先拉一次服务端比对基线：变了就**不落盘**，改弹一条提示，让你选「**覆盖保存**」还是「**放弃我的改动，载入最新**」（载入最新会就地重建编辑行，可直接在最新数据上继续改）。探测本身失败（网络不通等）不拦你保存 —— 能存就让它存。
+- **删除可撤销（v0.6.1）**：有内容的行点「删除」先变成**灰色待删除**、按钮换成「恢复」，**点「保存」才真正落盘**；刚新增的空行点删除则直接移除。手滑点错不必再用「取消」把整轮编辑一起丢掉。
+- **新增后自动到位（v0.6.1）**：点「新增」后新行会被**滚进视野**并**自动聚焦「标题」输入框**，接着打字就行。
+- **键盘与细节（v0.6.1）**：弹层打开时接一次焦点；`Esc` 分三层 —— 先撤冲突提示 → 编辑态等于「取消」（回浏览态、面板不关）→ 再按才关面板。「MD 管理」下拉在编辑态会说明为什么导出/复制暂时不可用。
+- **分类下拉带条数 + ‹ › 一步换分类（v0.7.0）**：下拉里每项写成 `常用（8）`，旁边一对 `‹ ›` 按钮直接跳上/下一个分类（分类多了比展开下拉快）。
+- **跨分类搜索（v0.7.0）**：浏览态顶部一个搜索框，按**标题或内容**即时过滤**全部分类**；分类头显示「命中/总数」（如 `常用（1/2）`），留空即恢复原样。
+- **分类操作：重命名 / 删除整个分类（v0.7.0）**：编辑态点 `⋯` 打开菜单 —— 「重命名分类」把该分类的**所有行**一起改名（每行分别去改太费事）；「删除这个分类」把它的条目**逐条标记为待删除**，保存前都能「恢复」。
+- **批量编辑（v0.7.0）**：每行左侧有勾选框，勾上任意一条就出现批量条 —— 可把选中的条目**一次性移到别的分类**、或**批量删除**（同样是「标记 → 保存才落盘」），另有「全选本分类 / 清空选择」。
+- **撤销 / 重做（v0.7.0）**：编辑态标题行有 `↶ ↷`，也支持 `Ctrl/⌘ + Z` 撤销、`Ctrl/⌘ + Shift + Z`（或 `Ctrl + Y`）重做；从进入编辑态那一刻打底，之后每个动作一个快照（上限 50 步）。
+- **编辑范围可见（v0.7.0）**：说明行右侧可一键切「只看本分类 / 显示全部」——默认只看当前分类（其他分类原样保留），要跨分类改就走「显示全部」。
+- **分类标题吸顶 + 窄屏适配（v0.7.0）**：长列表里分类标题吸在列表顶部；弹层宽度加了 `max-width:calc(100vw - 16px)`，手机窄屏不会被撑出屏幕。
+- **★ 自动发送改成「长按 300ms 才发」（v0.7.1）**：带 ⏎ 的条目**不再是点一下就发** —— **按住约 300ms 松手才发送**；**短按只把内容填进输入框（不发送）**，防手滑误发。键盘上长按不可行，所以 **Enter / 空格 = 明确发送**（读屏等非指针来源的点击同样按「明确发送」处理）。普通条目行为完全没变（点击=追加）。
+- **MD 导入**：弹层「MD 管理 → 导入MD」选择 Markdown 文件，按 `###` 解析分类、无序列表解析标题、缩进列表解析内容；同名标题跳过、其余合并追加。
+- **MD 导出 / 复制**：弹层「MD 管理 → 导出MD」下载 `quick-prompts.md`；**桌面版另有「MD 管理 → 复制MD」**，把同一份 MD 文本写入剪贴板——桌面外壳的下载通道受宿主策略影响，剪贴板是可靠退路。
 - **永不丢失**：数据存全局 `~/.dsh/quick-prompts.json`（`DSH_HOME` 目录下），与会话、项目无关，Web 版与桌面版共用；旧版按项目存放的数据可在新版里重新导入。
 - **图标随主题**：按钮图标见 `assets/快捷输入.svg`，以 `currentColor` 内联渲染，自动跟随明暗主题与悬停色。
 - **弹层自适应（桌面友好）**：弹层按可视区自动决定向上/向下展开、左右夹紧并按可用空间限高，小窗口下不会被推出可视区。
@@ -66,8 +79,8 @@ dsh plugin --profile web add "link:<本仓库的绝对路径>"
 
 桌面版运行时打开 **设置 → 插件** 安装，或直接让 DSH 助手用内置的 plugin_manager 安装：
 
-> 帮我把 `D:\dsh-web\插件技能安装\dsh-quick-prompts` 装进桌面版：用 plugin_manager 的 install_bundle，
-> target 传 `link:D:\dsh-web\插件技能安装\dsh-quick-prompts`。
+> 帮我把 `<本仓库的绝对路径>` 装进桌面版：用 plugin_manager 的 install_bundle，
+> target 传 `link:<本仓库的绝对路径>`。
 
 宿主会热重组配置并让页面按需加载新 bundle —— **不需要重启桌面版**。
 
@@ -75,7 +88,7 @@ dsh plugin --profile web add "link:<本仓库的绝对路径>"
 
 ```powershell
 # 先完全退出 DeepSeek Harness（CLI 需要独占 profile/package.json）
-cd D:\dsh-web\插件技能安装\dsh-quick-prompts
+cd <克隆下来的插件目录>
 powershell -ExecutionPolicy Bypass -File .\install-desktop.ps1              # link 安装（默认）
 powershell -ExecutionPolicy Bypass -File .\install-desktop.ps1 -Mode Tarball # 从 tgz 安装
 powershell -ExecutionPolicy Bypass -File .\install-desktop.ps1 -Uninstall    # 卸载
@@ -101,15 +114,18 @@ Web 版：重新执行上面的 `dsh plugin --profile web add ...`，然后重�
 | 数据文件 | 同一个 `~/.dsh/quick-prompts.json` —— Web 版与桌面版**共享同一份快捷语** |
 | `dsh.client.platform` | 仍然是 `"web"`：桌面端复用的就是 web 客户端载体（`dsh-client-modules` 只认 `platform === 'web'`），改成别的值反而会导致客户端半部不被加载 |
 | 弹层定位 | 桌面窗口通常更小，弹层改为按可视区自适应（向上/向下展开、左右夹紧、按可用空间限高） |
-| MD 导出 | 另提供「**复制MD**」按钮（仅在桌面端出现），下载通道异常时可把同一份 MD 文本写入剪贴板 |
+| MD 导出 | 「MD 管理」下拉里另提供「**复制MD**」（仅在桌面端出现），下载通道异常时可把同一份 MD 文本写入剪贴板 |
 
 ## 使用
 1. 输入框上方常驻**横向快捷条**：第一行分类（悬停/点击切换）、第二行标题；点击标题 → 内容**追加到输入框原有内容之后**（不清空、不自动发送，可再编辑）。两行都**只占一行**：放不下时**按住行内容左右拖动**即可看到后面的部分（鼠标拖动；触摸屏直接滑动）。
 2. 工具行闪电笔按钮（「权限切换」右侧）打开弹层：按分类分组浏览，点击同样**追加**到原有内容之后。
 3. **闪电笔右侧的三角**：一键收起 / 展开快捷条。收起后不占任何高度（手机、远程查看时很实用），闪电笔仍是选词入口；状态按设备记住，窄屏首次进入默认收起。
-4. 弹层「导入MD」：选择 Markdown 文件，按 `### 分类 / 列表标题 / 缩进内容` 解析导入（同名标题跳过）。
-5. 弹层「导出MD / 复制MD」：导出当前全部快捷语（桌面端可用「复制MD」写入剪贴板）。
-6. 弹层「管理」：每行可改「分类 / 标题 / 内容」、新增、删除，点「保存」落盘到 `~/.dsh/quick-prompts.json`。
+4. 弹层「MD 管理 → 导入MD」：选择 Markdown 文件，按 `### 分类 / 列表标题 / 缩进内容` 解析导入（同名标题跳过）。
+5. 弹层「MD 管理 → 导出MD / 复制MD」：导出当前全部快捷语（桌面端可用「复制MD」写入剪贴板）。
+6. 弹层顶部的**「分类」下拉 + 新增 / 修改**：先在下拉里选好分类，点「新增」→ 进编辑态并在这个分类末尾补一行（新行会自动滚进视野、标题框已聚焦），填标题 / 内容后点「保存」；点「修改」→ 进编辑态，**列表只显示这个分类的条目**，改完保存时**其他分类原样保留**。编辑态里仍可随时切上方的分类下拉换编辑对象，也可以选「＋ 新建分类…」现场造一个新分类。
+7. 编辑态里**删除是两段的**：点「删除」→ 行变灰、按钮变「恢复」（还没落盘）；点「保存」才真的删掉。保存前如果服务端已被别处改过，会先弹一条提示让你选「覆盖保存 / 载入最新」。`Esc` 依次用来撤提示、退出编辑态、关面板。
+8. **v0.7.0 的编辑台**：分类下拉旁 `‹ ›` 换分类、`⋯` 里重命名/删除整个分类；每行左侧勾选框 → 批量移到别的分类或批量删除；标题行 `↶ ↷`（或 `Ctrl+Z` / `Ctrl+Shift+Z`）撤销重做；说明行右侧切「只看本分类 / 显示全部」。浏览态顶部的搜索框按标题/内容跨分类过滤。
+9. **带 ⏎ 的自动发送条目（v0.7.1）**：**按住约 300ms 松手才发送**；**短按只填入不发送**；键盘 Enter / 空格 = 发送。
 
 > 两类状态刻意分开存：**快捷语内容**存共享的 `~/.dsh/quick-prompts.json`（三端一致、永不丢），**快捷条是否收起**存本设备 `localStorage`（各设备独立）。
 
@@ -139,6 +155,8 @@ node test-server.mjs     # 服务端半部：路由生命周期/重复注册容�
 node test-collapse.mjs   # 折叠默认值与每设备记忆（窄屏默认收起、记录优先、localStorage 不可用时回退）
 node test-category.mjs   # 分类下拉：选项来自全部分类（含草稿内新分类），切换无需先清空当前值
 node test-drag.mjs       # 单行 + 按住拖动（没超宽不接管、位移不足仍算点击、拖动中不误切分类、拖完不吃下次点击）
+node test-panel-header.mjs # 弹层工具行（MD 管理下拉 / 分类下拉 / 新增 / 修改）+ 删除可撤销 + 保存前冲突 + 搜索 / 批量 / 撤销重做 / 分类操作（17 项）
+node test-hold-to-send.mjs # 长按 300ms 才发：短按只填入、长按才发送、普通条目不变、拖动不算点击（8 项）
 ```
 
 ## 目录结构
