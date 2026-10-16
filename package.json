@@ -30,7 +30,7 @@
   },
   "scripts": {
     "check": "node --check lib/index.js && node --check lib/client.js",
-    "test": "node test-append.mjs && node test-parser.mjs && node test-roundtrip.mjs && node test-desktop.mjs && node test-server.mjs && node test-collapse.mjs && node test-category.mjs && node test-drag.mjs && node test-panel-header.mjs && node test-hold-to-send.mjs"
+    "test": "node test-append.mjs && node test-parser.mjs && node test-roundtrip.mjs && node test-desktop.mjs && node test-server.mjs && node test-collapse.mjs && node test-category.mjs && node test-drag.mjs && node test-panel-header.mjs && node test-hold-to-send.mjs && node test-refresh.mjs"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",
