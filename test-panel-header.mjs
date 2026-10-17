@@ -174,7 +174,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0))
 
   const sel = mdSelect(tree)
   assert.ok(sel, '顶部应有「MD 管理」下拉')
-  assert.deepEqual(optionLabels(sel), ['MD 管理', '导入MD', '导出MD'], '下拉项 = 导入MD / 导出MD（浏览器环境无复制MD）')
+  assert.deepEqual(optionLabels(sel), ['MD 管理', '导入MD', '导出MD', '重载界面'], '下拉项 = 导入MD / 导出MD / 重载界面（浏览器环境无复制MD）')
   assert.equal(sel.props.value, '', '下拉值恒为空，选完回到「MD 管理」')
 
   const pick = catPick(tree)

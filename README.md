@@ -1,6 +1,6 @@
 # dsh-quick-prompts
 
-**English**: A DeepSeek Harness (DSH) quick prompt input plugin that works in **both the Web profile and the Desktop app** — a persistent two-row shortcut bar (row 1: categories, row 2: titles) above the input field, plus a "lightning pen" popup whose top row holds an **"MD 管理" dropdown** (import / export / copy) and a **category dropdown + ‹ › / ⋯ / 新增 / 修改 / 撤销重做** (pick a category, add into it, edit only that category, rename or delete a whole category, bulk select/move/delete, undo-redo, cross-category search, and a server-side conflict check before saving); clicking a prompt **appends** its content after whatever is already in the input box (nothing is cleared, nothing is sent). Each prompt can optionally enable **auto-send** (⏎ icon; replaces the draft with that prompt and submits immediately via the official submit channel) and carry a numeric **order index** (prompts render left-to-right sorted by index ascending). Prompts are stored globally in `~/.dsh/quick-prompts.json`, so they survive environment restarts and project switches — and the same file is shared by the Web profile and the Desktop app. Both rows always stay a **single line**: when the content overflows, **press and drag the row sideways** to reveal the rest (no wrapping, no extra height).（中文说明见下）
+**English**: A DeepSeek Harness (DSH) quick prompt input plugin that works in **both the Web profile and the Desktop app** — a persistent two-row shortcut bar (row 1: categories, row 2: titles) above the input field, plus a "lightning pen" popup whose top row holds an **"MD 管理" dropdown** (import / export / copy) and a **category dropdown + ‹ › / ⋯ / 新增 / 修改 / 撤销重做** (pick a category, add into it, edit only that category, rename or delete a whole category, bulk select/move/delete, undo-redo, cross-category search, and a server-side conflict check before saving); clicking a prompt **appends** its content after whatever is already in the input box (nothing is cleared, nothing is sent). Each prompt can optionally enable **auto-send** (⏎ icon; replaces the draft with that prompt and submits immediately via the official submit channel) and carry a numeric **order index** (prompts render left-to-right sorted by index ascending). Prompts are stored globally in `~/.dsh/quick-prompts.json`, so they survive environment restarts and project switches — and the same file is shared by the Web profile and the Desktop app. Prompts added or changed **anywhere** (another window, a CLI, an AI editing the file) appear in the bar **within 2 seconds — no page reload needed**; unchanged data causes zero re-renders. Both rows always stay a **single line**: when the content overflows, **press and drag the row sideways** to reveal the rest (no wrapping, no extra height).（中文说明见下）
 
 DeepSeek Harness (DSH) 插件：**输入框快捷输入（分类快捷条 + 闪电笔）**，Web 版与桌面版通用。
 
@@ -8,7 +8,7 @@ DeepSeek Harness (DSH) 插件：**输入框快捷输入（分类快捷条 + 闪�
 > [lnyuqian/dsh-quick-prompts-data](https://github.com/lnyuqian/dsh-quick-prompts-data)；
 > 在本目录做提交前请先读 [AGENTS.md](AGENTS.md)。
 
-输入框上方**常驻横向快捷条**：第一行显示分类、第二行显示当前分类下的标题；鼠标悬停分类即切换下方标题；点击标题把内容**追加到输入框原有内容之后**（不清空已输入的内容，也不自动发送）。工具行「权限切换」右侧另有闪电笔按钮，弹层顶部是「MD 管理」下拉（**导入 / 导出 / 复制**三个动作收在一个下拉里）与「分类」下拉 + **新增 / 修改**：选定分类后「新增」把新条目放进这个分类、「修改」只列出这个分类的条目，保存前还会先查一次冲突。数据存全局 `~/.dsh/quick-prompts.json`，重启环境、换项目都不会丢，**Web 版与桌面版共用同一份数据**。
+输入框上方**常驻横向快捷条**：第一行显示分类、第二行显示当前分类下的标题；鼠标悬停分类即切换下方标题；点击标题把内容**追加到输入框原有内容之后**（不清空已输入的内容，也不自动发送）。工具行「权限切换」右侧另有闪电笔按钮，弹层顶部是「MD 管理」下拉（**导入 / 导出 / 复制**三个动作收在一个下拉里）与「分类」下拉 + **新增 / 修改**：选定分类后「新增」把新条目放进这个分类、「修改」只列出这个分类的条目，保存前还会先查一次冲突。数据存全局 `~/.dsh/quick-prompts.json`，重启环境、换项目都不会丢，**Web 版与桌面版共用同一份数据**；**v0.7.11 起别处新增/修改的提示语最长 2 秒自动出现在条上**，不用手动刷新页面。
 
 ## 功能特性
 
@@ -20,6 +20,11 @@ DeepSeek Harness (DSH) 插件：**输入框快捷输入（分类快捷条 + 闪�
   **`‹` 在分类下拉左边、`›` 在右边**（夹住下拉，实测 prevStep.right 369 ≤ select.left 375、nextStep.left 463 ≥ select.right 457），两个箭头各 **22×22**；成功提示改成**贴在这一行里的省略号文本**，不再单独占行。
   顶部一行 37px（实测），列表因此多出约 80px —— 可见提示语从 12 行增到 **15 行**。
   同时修掉一个实测抓到的真 bug：弹层是纵向 flex，内容一多**头部会被压扁**（控件被 `overflow:hidden` 裁掉）→ 现在只有列表伸缩，其余（头部 / 提示 / 冲突条 / 批量条）一律 `flex:none`。
+- **★ 提示语新增 / 修改后即时展示（v0.7.11）**：快捷条与弹层**不再需要手动刷新** —— 页面可见时每 **2 秒**探一次 `/api/quick-prompts`，**任何**写入者（另一个窗口 / 命令行 / 别处的 AI 直接改 `~/.dsh/quick-prompts.json`）落盘后**最长 2 秒**自己出现（实测 1353ms / 1126ms）。
+  以前只有四个刷新时机：打开弹层、窗口重新获得焦点、页面重新可见、弹层开着时的 60 秒兜底 —— **坐在窗口里不动**由别处改数据，四个一个都不触发，只能整页重载（而 DSH 的菜单里并没有刷新入口）。
+  内容没变时**零通知、零渲染**（实测 2.4 秒内 GET 从 1→2，而重渲染次数 2→2 纹丝不动）；轮询**不占用** `loading`（那是保存前冲突探测的忙判据，共用会让 2 秒一次的轮询挤掉一道保护）；页面不可见时不轮询，回到前台立刻补一次。
+  顺手修掉一个假警报：编辑期间**服务端没变**也会挂「数据已在别处更新」——原来先看编辑锁、后比指纹，现在先比指纹（实测：编辑中 2.4 秒无变化 → 无提示；别处真改后 1126ms 出提示，且正在输入的标题一个字符都没被覆盖）。
+  「MD 管理」下拉里新增 **「重载界面」**：提示语数据已经不用刷了，但**插件代码**更新后仍需整页重载，DSH 菜单里没有这个入口，就补在这里（编辑中不可点，免得丢掉未保存的编辑）。
 - **自动发送（按条开关）**：开关位于编辑态每行的「⏎ 自动发送：开/关」按钮（点「保存」落盘）。开启的条目在**弹层里标题后带 ⏎ 小图标**（这个样式一直不变）、在**快捷条上则用蓝色文字**表示「直接发送」；两种入口都是**按住约 300ms 松手才发送**（走官方 submit 通道，**以该短语整体替换草稿**——替换而非追加，避免把还没写完的草稿一并误发出去）；**短按只填入不发送**，键盘 Enter / 空格 = 明确发送。未开启的条目保持「追加且不发送」。旧数据无该字段时一律按不发送处理。
 - **序号排序**：每条快捷语可设置数字**序号**（编辑弹层中每行的「序」**下拉框**，选项自动按该行所属分类的短语数量生成 1..N），快捷条与弹层按**序号从小到大、自左向右**排列（稳定排序，无序号的条目排在最后）。进入编辑时自动按当前展示顺序预填 1..N；「新增」行落在**当前选中的分类**末尾并给出**该分类现有最大序号 +1** 的建议值；导出 MD 也按序号升序输出。
 - **分类管理**：编辑弹层中每条快捷语的「分类」是**下拉框**，可直接切换到任意已有分类；需要新分类时选「＋ 新建分类…」切成输入框，写完点「保存」落盘。（v0.4.1 修复：旧版是 `input + datalist`，浏览器会按当前值过滤候选项，必须先删掉当前分类才能看到别的分类。）
@@ -172,8 +177,8 @@ node test-category.mjs   # 分类下拉：选项来自全部分类（含草稿�
 node test-drag.mjs       # 单行 + 按住拖动（没超宽不接管、位移不足仍算点击、拖动中不误切分类、拖完不吃下次点击）
 node test-panel-header.mjs # 弹层工具行（MD 管理下拉 / 分类下拉 / 新增 / 修改）+ 删除可撤销 + 保存前冲突 + 搜索 / 批量 / 撤销重做 / 分类操作（17 项）
 node test-hold-to-send.mjs # 长按 300ms 才发：短按只填入、长按才发送、普通条目不变、拖动不算点击（8 项）
-node test-row-reorder.mjs # 拖拽排序：分类内换位 + 序号重排 1..N、落点计算、边界与其他字段保留（5 项）
-node test-refresh.mjs    # 外部变化刷新 + 编辑锁：首拉/重拉/节流/编辑期间只暂存
+node test-row-reorder.mjs # 拖拽排序：分类内换位 + 序号重排 1..N、落点计算、边界与其他字段保留（7 项）
+node test-refresh.mjs    # 外部变化刷新 + 编辑锁 + 自动同步：首拉/重拉/节流/编辑期间只暂存/2 秒自动同步/假警报回归（12 项）
 ```
 
 > `npm test` 把它们按顺序串起来跑（约 3 秒）。**其中 `test-load.mjs` 排在第一位**：

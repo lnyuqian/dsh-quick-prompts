@@ -235,11 +235,11 @@ const optionValues = (sel) => (sel.children || []).flat(3).filter(Boolean).map((
   const tree = renderSeat()
   const sel = mdSelect(tree)
   assert.ok(sel, '顶部应渲染「MD 管理」下拉')
-  assert.deepEqual(optionValues(sel), ['', 'import', 'export'], '浏览器环境下拉应只有 导入MD / 导出MD')
+  assert.deepEqual(optionValues(sel), ['', 'import', 'export', 'reload'], '浏览器环境下拉 = 导入MD / 导出MD / 重载界面')
   assert.equal(findButton(tree, '导出MD'), undefined, '不应再各占一个按钮')
   assert.equal(findButton(tree, '管理'), undefined, '旧「管理」入口应已移除')
   sel.props.onChange({ target: { value: 'import' } }) // 选「导入MD」：触发隐藏的文件选择框
-  ok('浏览器环境：MD 管理下拉 = 导入MD / 导出MD（不含复制MD）')
+  ok('浏览器环境：MD 管理下拉 = 导入MD / 导出MD / 重载界面（不含复制MD）')
 }
 
 {
@@ -254,7 +254,7 @@ const optionValues = (sel) => (sel.children || []).flat(3).filter(Boolean).map((
     const tree = renderSeat()
     const sel = mdSelect(tree)
     assert.ok(sel, '桌面环境应渲染「MD 管理」下拉')
-    assert.deepEqual(optionValues(sel), ['', 'import', 'export', 'copy'], '桌面下拉应多出「复制MD」')
+    assert.deepEqual(optionValues(sel), ['', 'import', 'export', 'copy', 'reload'], '桌面下拉应多出「复制MD」，末尾是「重载界面」')
     sel.props.onChange({ target: { value: 'copy' } })
     await new Promise((r) => setTimeout(r, 0))
     assert.ok(typeof copied === 'string' && copied.length > 0, '复制内容应为非空文本')

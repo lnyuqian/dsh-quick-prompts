@@ -14,6 +14,13 @@
  *  4. **编辑锁**：编辑期间刷新只暂存（`pendingExternal`），绝不替换
  *     `categories`／覆盖编辑基线；退出编辑态后才落位。
  *
+ * v0.7.11 追加三条（自动同步）：
+ *  5. `store.autoSync()`（页面可见时每 2 秒一次）能把外部写入拉进内存并通知，
+ *     且**不占用 `loading`** —— 那是保存前冲突探测的忙判据，共用会挤掉一道保护；
+ *  6. 编辑中自动同步「服务端没变」时**不得**置 `pendingExternal`：以前先看编辑锁、
+ *     后比指纹，轮询一密就会一直挂「数据已在别处更新」的假警报；
+ *  7. 轮询在飞去重（`autoSyncing`），2 秒一次不会叠成并发请求风暴。
+ *
  * 运行：node test-refresh.mjs
  */
 import assert from 'node:assert/strict'
@@ -299,6 +306,67 @@ function find(tree, pred) {
   assert.equal(titleInput.props.value, '我正在写', '用户正在输入的标题必须原样保留（不被外部数据覆盖）')
   assert.equal(find(tree, (n) => n.type === 'input' && n.props.value === '外部条目'), null, '外部条目不得出现在编辑行里')
   ok('组件层：编辑中只提示，绝不覆盖 draft')
+}
+
+/* 9. 自动同步（v0.7.11）：页面不动也能看到外部写入，且不占用 loading（不挤掉冲突探测） */
+{
+  const { mod } = await loadModule()
+  const { store, AUTO_SYNC_MS } = mod.internals
+  const { server } = installFetch(CATS_A)
+  store.load()
+  await flush()
+  const seen = []
+  store.subs.push(() => seen.push(store.categories))
+
+  assert.equal(AUTO_SYNC_MS, 2000, '自动同步间隔应为 2 秒（页面可见时轮询）')
+  server.cats = CATS_B
+  store.autoSync()
+  await flush()
+  assert.equal(store.categories.length, 2, '自动同步应把外部新增分类拉进内存')
+  assert.equal(seen.length, 1, '有变化时应通知订阅者一次（快捷条随之更新）')
+  assert.equal(store.loading, false, '自动同步不得占用 loading —— 它同时是保存前冲突探测的忙判据')
+  ok('自动同步：外部写入无需刷新页面 / 无需重新聚焦即可出现，且不占用冲突探测的忙判据')
+}
+
+/* 10. 假警报回归：编辑中自动同步「服务端没变」不得置 pendingExternal */
+{
+  const { mod } = await loadModule()
+  const { store } = mod.internals
+  const { server } = installFetch(CATS_A)
+  store.load()
+  await flush()
+  const flagSeen = []
+  store.subscribePending((p) => flagSeen.push(p === null ? null : p.length))
+  flagSeen.length = 0
+
+  store.setEditLock(true)
+  store.autoSync() // 服务端一个字节都没变
+  await flush()
+  assert.equal(store.pendingExternal, null, '服务端未变时不得暂存外部数据')
+  assert.deepEqual(flagSeen, [], '服务端未变时不得惊动提示位（2 秒一次的轮询否则会一直挂假警报）')
+
+  server.cats = CATS_B // 真的变了
+  store.autoSync()
+  await flush()
+  assert.deepEqual(store.pendingExternal, CATS_B, '真变了才暂存，等退出编辑态再落位')
+  assert.deepEqual(store.categories, CATS_A, '编辑期间内存数据仍不得被替换（编辑基线不动）')
+  ok('编辑中自动同步：没变不报、真变才提示（v0.7.11 修掉的假警报）')
+}
+
+/* 11. 自动同步去重：上一次轮询还在飞时不得再发 */
+{
+  const { mod } = await loadModule()
+  const { store } = mod.internals
+  const { calls } = installFetch(CATS_A)
+  store.load()
+  await flush()
+  const before = calls.gets
+  store.autoSync()
+  store.autoSync()
+  await flush()
+  assert.equal(calls.gets, before + 1, '轮询在飞时重复触发不应再发请求')
+  assert.equal(store.autoSyncing, false, '应答后应复位 autoSyncing，后续轮询继续有效')
+  ok('自动同步：在飞去重（2 秒一次不会叠成并发请求风暴）')
 }
 
 console.log('\n全部通过：' + passed + ' 项')
