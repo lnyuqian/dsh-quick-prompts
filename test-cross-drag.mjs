@@ -139,6 +139,10 @@ const orders = (cat) => cat.prompts.slice().sort((a, b) => a.order - b.order).ma
   assert.match(src, /\.qp-edit-body\{[^}]*display:flex/, '编辑行应把短语与按钮并排（qp-edit-body）')
   assert.match(src, /\.qp-edit-text\{[^}]*width:50%/, '提示短语（内容框）宽度应减半')
   assert.match(src, /\.qp-cat-drop\{/, '跨分类落点分类头应有高亮样式')
+  assert.match(src, /\.qp-toolbtn\{[^}]*height:24px/, '新增/修改/教程 应为按钮样式且高 24px（+2px）')
+  assert.match(src, /\.qp-toolbtn\{[^}]*border:1px solid/, '按钮应有边框（做成按钮样式）')
+  assert.match(src, /\.qp-tutorial\{/, '应有教程页样式')
+  assert.match(src, /className: 'qp-toolbtn'/, '头部按钮应使用 qp-toolbtn 类')
   ok('样式：去绿提示 / 条目自适应 / 内容框 50% / 跨分类高亮')
 }
 

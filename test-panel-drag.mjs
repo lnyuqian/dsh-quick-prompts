@@ -75,7 +75,7 @@ function textOf(node, out = []) {
  * 渲染一次闪电面板。drag=null 是浏览态初始；drag 传对象即「正在拖」的渲染态。
  * listEl 用来模拟滚动容器（自动滚动测试）。
  */
-async function renderPanel({ drag = null, listEl = null } = {}) {
+async function renderPanel({ drag = null, listEl = null, tutorial = false } = {}) {
   let factory = null
   const injected = []
   const docListeners = {}
@@ -119,11 +119,14 @@ async function renderPanel({ drag = null, listEl = null } = {}) {
     effect(fn) { if (typeof fn === 'function') fn() },
   })
 
-  // 状态队列顺序：useBarCollapsed(1) → useQuickCategories(1) → 座位自身 16 个
+  // 状态队列顺序：useBarCollapsed(1) → useQuickCategories(1) → 座位自身 17 个
+  // （open, pos, err, info, editing, draft, saving, extern, targetCat, conflict,
+  //   query, catMenu, renaming, showAll, drag, armed, tutorial）
   stateQueue = [
     SKIP, CATS,
     true, { x: 0, y: 0, up: false, w: 340, minHeight: 0, maxHeight: 400 },
     null, null, false, [], false, false, '', null, '', false, null, false, drag, false,
+    tutorial ? true : SKIP,
   ]
   setterCalls = []
   const seat = components['conversation.input.left']
@@ -220,6 +223,21 @@ async function renderPanel({ drag = null, listEl = null } = {}) {
   assert.equal((r.docListeners.pointermove || []).length, 0, '松手后 pointermove 应卸掉')
   assert.equal((r.docListeners.pointerup || []).length, 0, '松手后 pointerup 应卸掉')
   ok('松手：document 监听卸干净')
+}
+
+/* 8. 教程页：点「教程」后列表区域换成教程内容（v0.7.14） */
+{
+  const r = await renderPanel({ tutorial: true })
+  const tut = findByClass(r.tree, 'qp-tutorial')
+  const items = findByClass(r.tree, 'qp-item')
+  const text = textOf(r.tree).join('')
+  assert.equal(tut.length, 1, '教程态应渲染 qp-tutorial')
+  assert.equal(items.length, 0, '教程态不应再显示提示语列表')
+  assert.match(text, /拖动排序/, '教程应讲拖动排序')
+  assert.match(text, /拖到别的分类|搬过去/, '教程应讲跨分类搬运')
+  assert.match(text, /小三角/, '教程应讲闪电笔旁的三角收起')
+  assert.match(text, /同步仓库|私有仓库/, '教程应讲多台电脑同步')
+  ok('教程页：拖动排序 / 跨分类 / 三角收起 / 同步仓库 都在')
 }
 
 console.log(`\n结果: ${passed} passed, 0 failed`)
