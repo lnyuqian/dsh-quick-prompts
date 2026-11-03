@@ -141,6 +141,8 @@ const orders = (cat) => cat.prompts.slice().sort((a, b) => a.order - b.order).ma
   assert.match(src, /\.qp-edit-actions\{[^}]*gap:14px/, '自动发送与删除之间应再加 10px（gap 14px）')
   assert.match(src, /\.qp-del\{[^}]*border:1px solid #000/, '删除按钮应加边框')
   assert.match(src, /\.qp-del\{[^}]*color:#000/, '删除按钮应改为黑色')
+  assert.match(src, /\.qp-edit-actions \.qp-auto\{[^}]*align-self:center/, '自动发送应在行内居中（去掉 flex-end）')
+  assert.match(src, /\.qp-edit-actions \.qp-del,\.qp-edit-actions \.qp-undo\{[^}]*align-self:center/, '删除应与自动发送水平对齐（同为 center）')
   assert.match(src, /\.qp-edit-text\{[^}]*width:100%/, '完整提示词（内容框）应整宽')
   assert.match(src, /className: 'qp-edit-actions'/, '自动发送/删除应在标题那一行（qp-edit-actions）')
   assert.ok(!/qp-edit-body/.test(src), '旧的 qp-edit-body 布局应已移除')
