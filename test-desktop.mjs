@@ -270,4 +270,40 @@ const optionValues = (sel) => (sel.children || []).flat(3).filter(Boolean).map((
   }
 }
 
+/* ---------------- 4. 弹层落点自校正（v0.7.19，DSH 0.2.2 的 .composerSeat）---------------- */
+{
+  const { popShiftCorrection } = mod.internals
+  assert.equal(typeof popShiftCorrection, 'function', 'internals 应导出 popShiftCorrection')
+
+  // 正常情况：实测落点就是期望落点 → 不需要改
+  const same = popShiftCorrection({ x: 280, y: 620, up: true }, { left: 280, top: 281, bottom: 620 }, { dx: 0, dy: 0 })
+  assert.deepEqual({ dx: same.dx, dy: same.dy, changed: same.changed }, { dx: 0, dy: 0, changed: false },
+    '已经贴住时不应产生修正、也不应触发重渲染')
+
+  // 宿主 will-change:transform 抢走包含块：弹层整体下移（实测本机 681px 座位偏移）→ 按差值补回
+  const shifted = popShiftCorrection({ x: 280, y: 620, up: true }, { left: 280, top: 962, bottom: 1293 }, { dx: 0, dy: 0 })
+  assert.equal(shifted.dy, -673, '向上翻时按「弹层底边 = 锚点 y」补差（620 - 1293）')
+  assert.equal(shifted.dx, 0, '横向没偏就不该动')
+  assert.equal(shifted.changed, true, '有偏差必须触发一次修正')
+
+  // 修正量累加：补过 -673 之后，若仍差 3px，应在此基础上继续补到贴住
+  const again = popShiftCorrection({ x: 280, y: 620, up: true }, { left: 280, top: 284, bottom: 623 }, { dx: 0, dy: -673 })
+  assert.equal(again.dy, -676, '残差应在既有修正上继续累加，而不是从 0 重算')
+
+  // 向下翻（up=false）时对齐的是 top 而不是 bottom
+  const down = popShiftCorrection({ x: 100, y: 200, up: false }, { left: 100, top: 260, bottom: 600 }, { dx: 0, dy: 0 })
+  assert.equal(down.dy, -60, '向下翻应按 top 对齐')
+  assert.equal(down.changed, true)
+
+  // 亚像素抖动不该来回改
+  const tiny = popShiftCorrection({ x: 10, y: 20, up: false }, { left: 10, top: 20.6, bottom: 300 }, { dx: 0, dy: 0 })
+  assert.equal(tiny.changed, false, '1px 以内的差视为已贴住，避免来回抖')
+
+  // 量不到矩形（元素还没挂上）→ 原样返回、不动
+  const nulls = popShiftCorrection({ x: 1, y: 2, up: true }, null, { dx: 3, dy: 4 })
+  assert.deepEqual({ dx: nulls.dx, dy: nulls.dy, changed: nulls.changed }, { dx: 3, dy: 4, changed: false },
+    '没得量时应保留现状、不报错')
+  ok('弹层落点自校正：包含块偏移按实测差值补齐（上翻对齐底边 / 下翻对齐顶边），亚像素不抖')
+}
+
 console.log('\n全部通过：' + passed + ' 项')
